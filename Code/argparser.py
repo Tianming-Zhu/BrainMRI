@@ -1,6 +1,6 @@
 import argparse
 import os
-from ctgan import config as cfg
+from Code import config as cfg
 import pandas as pd
 
 # To allow True/False argparse input.
