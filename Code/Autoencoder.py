@@ -16,8 +16,8 @@ from skimage.transform import resize
 
 #from pytorch_ssim_3D.pytorch_ssim import SSIM3D
 
-from ctgan.config import AE_setting as cfg
-from ctgan.logger import Logger
+from Code.config import AE_setting as cfg
+from Code.logger import Logger
 # NOTE: Added conditional generator to the code.
 
 ### added for validation
