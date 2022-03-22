@@ -247,7 +247,7 @@ class AutoEncoder(object):
                 # ssim_loss = pytorch_ssim.SSIM()
                # loss = -ssim_loss(batch,recon_x)
 
-                loss = self.calculate_fid(inception_model,batch.squeeze(1).detach().numpy(),recon_x.squeeze(1).detach().numpy())
+                loss = self.calculate_fid(inception_model,batch.squeeze(1).detach().cpu().numpy(),recon_x.squeeze(1).detach().cpu().numpy())
                 #print("FID loss is: " + str(loss))
                 self.train_loss_vec.append(loss.detach().numpy())
                 loss.requires_grad = True
