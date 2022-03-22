@@ -221,7 +221,6 @@ class AutoEncoder(object):
 
         steps_per_epoch = max(len(train_data) // self.batch_size, 1)
         inception_model = InceptionV3(include_top=False, pooling='avg', input_shape=(299, 299, 3))
-        #inception_model = keras.models.load_model('/content/BrainMRI/ctgan/inception.h5')
         #inception_model = keras.models.load_model('/home/stazt/BrainMRI/ctgan/inception.h5')
 ###################10. Start training ############################################################
         for i in range(self.epochs):
