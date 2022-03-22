@@ -160,7 +160,7 @@ class AutoEncoder(object):
         return fid
 
     def fit(self, data, validation=True,model_summary=False,reload=False):
-        print("Device is: "+ self.device)
+        #print("Device is: "+ self.device)
         if reload:
             self.trained_epoches = 0
 
@@ -213,9 +213,9 @@ class AutoEncoder(object):
         #assert self.batch_size % 2 == 0
 
         steps_per_epoch = max(len(train_data) // self.batch_size, 1)
-        #inception_model = InceptionV3(include_top=False, pooling='avg', input_shape=(299, 299, 3))
+        inception_model = InceptionV3(include_top=False, pooling='avg', input_shape=(299, 299, 3))
         #inception_model = keras.models.load_model('/content/BrainMRI/ctgan/inception.h5')
-        inception_model = keras.models.load_model('/home/stazt/BrainMRI/ctgan/inception.h5')
+        #inception_model = keras.models.load_model('/home/stazt/BrainMRI/ctgan/inception.h5')
 ###################10. Start training ############################################################
         for i in range(self.epochs):
             self.decoder.train()  ##switch to train mode
