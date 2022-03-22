@@ -139,12 +139,19 @@ class AutoEncoder(object):
 
     # calculate frechet inception distance
     def calculate_fid(self,model, images1, images2):
+        if torch.cuda.is_available():
+          images1 = images1.cpu().detach().numpy()
+          images2 = images2.cpu().detach().numpy()
+        else:
+          images1 = images1.detach().numpy()
+          images2 = images2.detach().numpy()
+            
         # calculate activations
         images1 = scale_images(images1, (299, 299, 3))
         images2 = scale_images(images2, (299, 299, 3))
 
-        act1 = torch.from_numpy(model.predict(images1)).to(self.device)
-        act2 = torch.from_numpy(model.predict(images2)).to(self.device)
+        act1 = torch.from_numpy(model.predict(images1))
+        act2 = torch.from_numpy(model.predict(images2))
 
         mu1, sigma1 = torch.mean(act1, dim=0), torch.cov(act1.T)
         mu2, sigma2 = torch.mean(act2, dim=0), torch.cov(act2.T)
@@ -247,7 +254,7 @@ class AutoEncoder(object):
                 # ssim_loss = pytorch_ssim.SSIM()
                # loss = -ssim_loss(batch,recon_x)
 
-                loss = self.calculate_fid(inception_model,batch.squeeze(1).detach().cpu().numpy(),recon_x.squeeze(1).detach().cpu().numpy())
+                loss = self.calculate_fid(inception_model,batch.squeeze(1),recon_x.squeeze(1))
                 #print("FID loss is: " + str(loss))
                 self.train_loss_vec.append(loss.detach().numpy())
                 loss.requires_grad = True
@@ -255,16 +262,16 @@ class AutoEncoder(object):
                 ################## 7. Updating the weights and biases using Adam Optimizer #######################################################
                 optimizerAE.step()
             print("Epoch " + str(self.trained_epoches) +
-                                      ", Training Loss: " + str(loss.detach().cpu().numpy()))
+                                      ", Training Loss: " + str(loss.detach().numpy()))
             if validation:
                 recon_val_data = self.reconstruct(val_data)
                 #val_loss = (recon_val_data - val_data).abs().mean()
-                val_loss = self.calculate_fid(inception_model,val_data.squeeze(1).detach().cpu().numpy(),recon_val_data.squeeze(1).detach().cpu().numpy())
+                val_loss = self.calculate_fid(inception_model,val_data.squeeze(1)),recon_val_data.squeeze(1))
                 #print(val_data.squeeze(1).detach().numpy().shape)
                 #print(recon_val_data.squeeze(1).detach().numpy().shape)
-                self.val_loss_vec.append(val_loss.detach().cpu())
+                self.val_loss_vec.append(val_loss.detach().numpy())
                 print("Epoch " + str(self.trained_epoches) +
-                      ", Validation Loss: " + str(val_loss.detach().cpu().numpy()))
+                      ", Validation Loss: " + str(val_loss.detach().numpy()))
 
     def reconstruct(self,data):
         self.encoder.eval()  ## switch to evaluate mode
