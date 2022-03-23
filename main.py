@@ -8,12 +8,12 @@ import os
 import time
 from sklearn.model_selection import train_test_split
 import sys
-from ctgan.argparser import ParserOutput
-from ctgan.logger import Logger
+from Code.argparser import ParserOutput
+from Code.logger import Logger
 import optuna
-from ctgan import config as cfg
+from Code import config as cfg
 sys.path.append('/home/stazt/BrainMRI')
-from ctgan import Autoencoder
+from Code import Autoencoder
 filelist = glob.glob('/home/stazt/Public_Dataset/sub*')
 images = []
 for i in np.arange(len(filelist)):
