@@ -265,7 +265,7 @@ class AutoEncoder(object):
             if validation:
                 recon_val_data = self.reconstruct(val_data)
                 #val_loss = (recon_val_data - val_data).abs().mean()
-                val_loss = self.calculate_fid(inception_model,val_data.squeeze(1)),recon_val_data.squeeze(1))
+                val_loss = self.calculate_fid(inception_model,val_data.squeeze(1),recon_val_data.squeeze(1))
                 #print(val_data.squeeze(1).detach().numpy().shape)
                 #print(recon_val_data.squeeze(1).detach().numpy().shape)
                 self.val_loss_vec.append(val_loss.detach().numpy())
