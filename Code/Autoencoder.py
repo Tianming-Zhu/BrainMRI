@@ -245,7 +245,7 @@ class AutoEncoder(object):
                 # loss = L2(batch, recon_x)
 
                 # L1 = L1Loss()
-                # loss = L1(batch,recon_x)
+                # loss = L1(batch.cpu(),recon_x.cpu())
                 ## SSIM
                 #ssim_loss = SSIM3D()
                 #criterion = SSIM_Loss(data_range=1.0, size_average=True, channel=3)
@@ -255,7 +255,7 @@ class AutoEncoder(object):
 
                 loss = self.calculate_fid(inception_model,batch.squeeze(1),recon_x.squeeze(1))
                 #print("FID loss is: " + str(loss))
-                self.train_loss_vec.append(loss.detach().numpy())
+                self.train_loss_vec.append(loss.cpu().detach().numpy())
                 loss.requires_grad = True
                 loss.backward()
                 ################## 7. Updating the weights and biases using Adam Optimizer #######################################################
@@ -268,9 +268,9 @@ class AutoEncoder(object):
                 val_loss = self.calculate_fid(inception_model,val_data.squeeze(1),recon_val_data.squeeze(1))
                 #print(val_data.squeeze(1).detach().numpy().shape)
                 #print(recon_val_data.squeeze(1).detach().numpy().shape)
-                self.val_loss_vec.append(val_loss.detach().numpy())
+                self.val_loss_vec.append(val_loss.cpu().detach().numpy())
                 print("Epoch " + str(self.trained_epoches) +
-                      ", Validation Loss: " + str(val_loss.detach().numpy()))
+                      ", Validation Loss: " + str(val_loss.cpu().detach().numpy()))
 
     def reconstruct(self,data):
         self.encoder.eval()  ## switch to evaluate mode
