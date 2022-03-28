@@ -37,8 +37,8 @@ def scale_images(images, new_shape):
     return asarray(images_list)
 
 def calculate_fid(model, images1, images2, eps=1e-6):
-    images1 = images1.cpu().detach().numpy()
-    images2 = images2.cpu().detach().numpy()
+    images1 = images1.detach().numpy()
+    images2 = images2.detach().numpy()
 
     # calculate activations
     images1 = scale_images(images1, (299, 299, 3))

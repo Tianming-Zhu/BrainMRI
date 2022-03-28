@@ -196,7 +196,10 @@ class AutoEncoder(object):
                 recon_x = self.decoder(bn_output)
 
                 ################### 6. Calculate training loss #################################################################
-                loss = M.loss_fun(batch.cpu(),recon_x.cpu())
+                if self.device == 'cpu':
+                    loss = M.loss_fun(batch, recon_x)
+                else:
+                    loss = M.loss_fun(batch.cpu(),recon_x.cpu())
                 self.train_loss_vec.append(loss.detach().numpy())
                 loss.backward()
                 ################## 7. Updating the weights and biases using Adam Optimizer #######################################################
@@ -205,10 +208,10 @@ class AutoEncoder(object):
                                       ", Training Loss: " + str(loss.detach().numpy()))
             if validation:
                 recon_val_data = self.reconstruct(val_data)
-                val_loss = M.loss_fun(val_data.cpu(),recon_val_data.cpu())
-                #val_loss = self.calculate_fid(inception_model,val_data.squeeze(1),recon_val_data.squeeze(1))
-                #print(val_data.squeeze(1).detach().numpy().shape)
-                #print(recon_val_data.squeeze(1).detach().numpy().shape)
+                if self.device == 'cpu':
+                    val_loss = M.loss_fun(val_data,recon_val_data)
+                else:
+                    val_loss = M.loss_fun(val_data.cpu(), recon_val_data.cpu())
                 self.val_loss_vec.append(val_loss.detach().numpy())
                 print("Epoch " + str(self.trained_epoches) +
                       ", Validation Loss: " + str(val_loss.detach().numpy()))
