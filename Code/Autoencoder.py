@@ -7,14 +7,14 @@ from scipy import linalg
 from torchsummary import summary
 #from pytorch_fid.inception import InceptionV3
 from numpy import iscomplexobj,asarray
-from scipy.linalg import sqrtm
+
 from tensorflow import keras
-from tensorflow.keras.applications.inception_v3 import InceptionV3
+
 #from tensorflow.keras.applications.inception_v3 import preprocess_input
 #from tensorflow.keras.datasets.mnist import load_data
 from skimage.transform import resize
 
-#from pytorch_ssim_3D.pytorch_ssim import SSIM3D
+
 
 from Code.config import AE_setting as cfg
 from Code.logger import Logger
@@ -22,8 +22,14 @@ from Code.logger import Logger
 
 ### added for validation
 from sklearn.model_selection import train_test_split
-# import ctgan.metric as M
+import Code.Metrics as M
 # import optuna
+
+import sys
+import warnings
+
+if not sys.warnoptions:
+    warnings.simplefilter("ignore")
 
 ################################# 1. Define our neural networks ###################################################
 class Encoder(Module):
@@ -104,15 +110,7 @@ def weights_init(m):
 
 #######################4. Fretchet Inception Distance ############################################
 
-## scale an array of images to a new size
-def scale_images(images, new_shape):
-    images_list = list()
-    for image in images:
-            ## resize with nearest neighbor interpolation
-        new_image = resize(image, new_shape, 0)
-            ## store
-        images_list.append(new_image)
-    return asarray(images_list)
+
 
 ##################5. Creating the model ################################################
 class AutoEncoder(object):
@@ -134,37 +132,11 @@ class AutoEncoder(object):
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")  # NOTE: original implementation "cuda:0" if torch.cuda.is_available() else "cpu"
         self.train_loss_vec = []
         self.val_loss_vec = []
+        self.Loss = cfg.LOSS
         #self.optuna_metric = None
 
 
     # calculate frechet inception distance
-    def calculate_fid(self,model, images1, images2):
-        if torch.cuda.is_available():
-          images1 = images1.cpu().detach().numpy()
-          images2 = images2.cpu().detach().numpy()
-        else:
-          images1 = images1.detach().numpy()
-          images2 = images2.detach().numpy()
-            
-        # calculate activations
-        images1 = scale_images(images1, (299, 299, 3))
-        images2 = scale_images(images2, (299, 299, 3))
-
-        act1 = torch.from_numpy(model.predict(images1))
-        act2 = torch.from_numpy(model.predict(images2))
-
-        mu1, sigma1 = torch.mean(act1, dim=0), torch.cov(act1.T)
-        mu2, sigma2 = torch.mean(act2, dim=0), torch.cov(act2.T)
-        # calculate sum squared difference between means
-        ssdiff = torch.sum((mu1 - mu2) ** 2.0)
-        # calculate sqrt of product between cov
-        covmean = sqrtm(torch.matmul(sigma1, sigma2))
-        # check and correct imaginary numbers from sqrt
-        if iscomplexobj(covmean):
-            covmean = covmean.real
-        # calculate score
-        fid = ssdiff + torch.trace(sigma1 + sigma2 - 2.0 * covmean)
-        return fid
 
     def fit(self, data, validation=True,model_summary=False,reload=False):
         #print("Device is: "+ self.device)
@@ -220,7 +192,7 @@ class AutoEncoder(object):
         #assert self.batch_size % 2 == 0
 
         steps_per_epoch = max(len(train_data) // self.batch_size, 1)
-        inception_model = InceptionV3(include_top=False, pooling='avg', input_shape=(299, 299, 3))
+
         #inception_model = keras.models.load_model('/home/stazt/BrainMRI/ctgan/inception.h5')
 ###################10. Start training ############################################################
         for i in range(self.epochs):
@@ -233,30 +205,15 @@ class AutoEncoder(object):
                 #emb = torch.from_numpy(train_data.astype('float32')).to(self.device)
                 indices = torch.randperm(len(train_data),device=self.device)[:self.batch_size]
                 batch = train_data[indices].unsqueeze(1)
-                #print(batch.squeeze(1).detach().numpy().shape)
+                print(batch.squeeze(1).detach().numpy().shape)
                 encoded_data= self.encoder(batch)
                 bn_output = self.bn(encoded_data)
                 recon_x = self.decoder(bn_output)
-                #print(recon_x.squeeze(1).detach().numpy().shape)
+                print(recon_x.squeeze(1).detach().numpy().shape)
 
                 ################### 6. Calculate training loss #################################################################
-                #loss = np.sum(np.abs(batch.detach().numpy() -recon_x.detach().numpy()))
-                # L2 = MSELoss()
-                # loss = L2(batch, recon_x)
-
-                # L1 = L1Loss()
-                # loss = L1(batch,recon_x)
-                ## SSIM
-                #ssim_loss = SSIM3D()
-                #criterion = SSIM_Loss(data_range=1.0, size_average=True, channel=3)
-                #loss = 1-ssim_loss(batch,recon_x)
-                # ssim_loss = pytorch_ssim.SSIM()
-               # loss = -ssim_loss(batch,recon_x)
-
-                loss = self.calculate_fid(inception_model,batch.squeeze(1),recon_x.squeeze(1))
-                #print("FID loss is: " + str(loss))
+                loss = M.loss_fun(batch.cpu(),recon_x.cpu())
                 self.train_loss_vec.append(loss.detach().numpy())
-                loss.requires_grad = True
                 loss.backward()
                 ################## 7. Updating the weights and biases using Adam Optimizer #######################################################
                 optimizerAE.step()
@@ -264,8 +221,8 @@ class AutoEncoder(object):
                                       ", Training Loss: " + str(loss.detach().numpy()))
             if validation:
                 recon_val_data = self.reconstruct(val_data)
-                #val_loss = (recon_val_data - val_data).abs().mean()
-                val_loss = self.calculate_fid(inception_model,val_data.squeeze(1)),recon_val_data.squeeze(1))
+                val_loss = M.loss_fun(val_data.cpu(),recon_val_data.cpu())
+                #val_loss = self.calculate_fid(inception_model,val_data.squeeze(1),recon_val_data.squeeze(1))
                 #print(val_data.squeeze(1).detach().numpy().shape)
                 #print(recon_val_data.squeeze(1).detach().numpy().shape)
                 self.val_loss_vec.append(val_loss.detach().numpy())
