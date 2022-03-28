@@ -52,6 +52,7 @@ def _parse_args():
     parser.add_argument('--AE_dropout', default=None, type=float, metavar='', help='Autoencoder dropout rate')
     parser.add_argument('--AE_dis_step', default=None, type=int, metavar='', help='Autoencoder discriminator step')
     parser.add_argument('--AE_device', default=None, type=str, metavar='', help='Autoencoder cpu or cuda')
+    parser.add_argument('--AE_metric', default='L1', type=str, metavar='', help='Metric used for measuring reconstructed error')
 
 
 
@@ -175,6 +176,9 @@ class ParserOutput:
 
             if args.AE_device is not None:
                 cfg.AE_setting.DEVICE = args.AE_device
+
+            if args.AE_metric is not None:
+                cfg.AE_setting.LOSS = args.AE_metric
 
 
 
