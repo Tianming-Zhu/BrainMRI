@@ -2,7 +2,7 @@ import torch
 import numpy as np
 from torch.nn import L1Loss, MSELoss
 from Code.config import AE_setting as cfg
-from pytorch_ssim_3D.pytorch_ssim import SSIM3D
+#from pytorch_ssim_3D.pytorch_ssim import SSIM3D
 from tensorflow.keras.applications.inception_v3 import InceptionV3
 from scipy.linalg import sqrtm
 
@@ -13,14 +13,14 @@ def loss_fun(real, fake):
     if cfg.LOSS == 'l2':
         L2 = MSELoss()
         return L2(real, fake)
-    if cfg.LOSS == 'ssim':
-        ssim_loss = SSIM3D()
-        return 1-ssim_loss(real, fake)
-    if cfg.LOSS == 'fid':
-        inception_model = InceptionV3(include_top=False, pooling='avg', input_shape=(299, 299, 3))
-        loss = calculate_fid(inception_model, real, fake)
-        loss.requires_grad = True
-        return loss
+    # if cfg.LOSS == 'ssim':
+    #     ssim_loss = SSIM3D()
+    #     return 1-ssim_loss(real, fake)
+    # if cfg.LOSS == 'fid':
+    #     inception_model = InceptionV3(include_top=False, pooling='avg', input_shape=(299, 299, 3))
+    #     loss = calculate_fid(inception_model, real, fake)
+    #     loss.requires_grad = True
+    #     return loss
     else:
         print("This metric is not available.")
 

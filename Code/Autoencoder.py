@@ -220,7 +220,7 @@ class AutoEncoder(object):
         self.encoder.eval()  ## switch to evaluate mode
         self.decoder.eval()
         self.bn.eval()
-        encoded_data = self.encoder(data.unsqueeze(1))
+        encoded_data = self.encoder(data.unsqueeze(1).to(self.device))
         decoder_input = self.bn(encoded_data)
         output = self.decoder(decoder_input).squeeze(1)
         return output
