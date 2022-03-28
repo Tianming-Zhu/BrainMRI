@@ -14,7 +14,7 @@ class AE_setting:
     DISCRIMINATOR_STEP = 1
     DEVICE = "cpu"  # "cuda:0"
     DROPOUT = 0.5
-    LOSS = 'L1'
+    LOSS = 'l1'
  
        
      

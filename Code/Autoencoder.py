@@ -1,21 +1,8 @@
 import numpy as np
 import torch
-from torch.nn import L1Loss, BatchNorm3d, Conv3d, ConvTranspose3d, LeakyReLU, MSELoss, Module, ReLU, Sequential,Flatten, Linear, Sigmoid, Dropout, init, Tanh,functional
-from torch.nn.functional import binary_cross_entropy_with_logits,adaptive_avg_pool2d
+from torch.nn import BatchNorm3d, Conv3d, ConvTranspose3d, LeakyReLU, Module, ReLU, Sequential,Flatten, Linear, Sigmoid, Dropout, init, Tanh,functional
 from torch.optim import Adam
-from scipy import linalg
 from torchsummary import summary
-#from pytorch_fid.inception import InceptionV3
-from numpy import iscomplexobj,asarray
-
-from tensorflow import keras
-
-#from tensorflow.keras.applications.inception_v3 import preprocess_input
-#from tensorflow.keras.datasets.mnist import load_data
-from skimage.transform import resize
-
-
-
 from Code.config import AE_setting as cfg
 from Code.logger import Logger
 # NOTE: Added conditional generator to the code.
@@ -139,7 +126,6 @@ class AutoEncoder(object):
     # calculate frechet inception distance
 
     def fit(self, data, validation=True,model_summary=False,reload=False):
-        #print("Device is: "+ self.device)
         if reload:
             self.trained_epoches = 0
 
@@ -205,11 +191,9 @@ class AutoEncoder(object):
                 #emb = torch.from_numpy(train_data.astype('float32')).to(self.device)
                 indices = torch.randperm(len(train_data),device=self.device)[:self.batch_size]
                 batch = train_data[indices].unsqueeze(1)
-                print(batch.squeeze(1).detach().numpy().shape)
                 encoded_data= self.encoder(batch)
                 bn_output = self.bn(encoded_data)
                 recon_x = self.decoder(bn_output)
-                print(recon_x.squeeze(1).detach().numpy().shape)
 
                 ################### 6. Calculate training loss #################################################################
                 loss = M.loss_fun(batch.cpu(),recon_x.cpu())

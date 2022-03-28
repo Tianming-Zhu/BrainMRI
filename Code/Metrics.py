@@ -7,16 +7,16 @@ from tensorflow.keras.applications.inception_v3 import InceptionV3
 from scipy.linalg import sqrtm
 
 def loss_fun(real, fake):
-    if cfg.LOSS == 'L1':
+    if cfg.LOSS == 'l1':
         L1 = L1Loss()
         return L1(real,fake)
-    if cfg.LOSS == 'L2':
+    if cfg.LOSS == 'l2':
         L2 = MSELoss()
         return L2(real, fake)
-    if cfg.LOSS == 'SSIM':
+    if cfg.LOSS == 'ssim':
         ssim_loss = SSIM3D()
         return 1-ssim_loss(real, fake)
-    if cfg.LOSS == 'FID':
+    if cfg.LOSS == 'fid':
         inception_model = InceptionV3(include_top=False, pooling='avg', input_shape=(299, 299, 3))
         loss = calculate_fid(inception_model, real, fake)
         loss.requires_grad = True
