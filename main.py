@@ -3,6 +3,8 @@ import pandas as pd
 import math
 import nibabel as nib
 import torch
+from torch.utils.data import DataLoader
+import torch.nn as nn
 import glob
 import os
 import time
@@ -28,9 +30,9 @@ images = []
 for i in np.arange(len(filelist)):
     img = nib.load(filelist[i])
     images.append(img.get_fdata())
-data = torch.from_numpy(np.array(images)).float()
-train_val_data, testdata = train_test_split(data, test_size=0.15, random_state=42)
 
+data = torch.from_numpy(np.array(images)).float()
+train_val_data, test_data = train_test_split(data, test_size=0.15, random_state=42)
 
 # GLOBAL PARAMETERS
 # These parameters are needed in Optuna training and have to be placed outside of the functions.
@@ -74,6 +76,9 @@ def run_individual_training():
     #select model
     if parser.model_type == 'ae':
         model = Autoencoder.AutoEncoder()
+        # if torch.cuda.device_count() > 1:
+        #     print("Let's use " + str(torch.cuda.device_count()) + " GPUs!")
+        #     model = nn.DataParallel(model)
     elif parser.model_type == 'CVAE':
         model = CVAE.VAutoEncoder()
     else:

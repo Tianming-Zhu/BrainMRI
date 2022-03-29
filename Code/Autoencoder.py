@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+from torch.utils.data import DataLoader
 from torch.nn import BatchNorm3d, Conv3d, ConvTranspose3d, LeakyReLU, Module, ReLU, Sequential,Flatten, Linear, Sigmoid, Dropout, init, Tanh,functional
 from torch.optim import Adam
 from torchsummary import summary
@@ -132,7 +133,7 @@ class AutoEncoder(object):
         # NOTE: changed data_dim to self.data_dim. It'll be used later in sample function.
         self.data_dim = data.shape
         print('data dimension: ' + str(self.data_dim))
-        data = data.to(self.device)
+        data = data.to(self.device,non_blocking=True)
 
         # compute side after transformation
         self.side = self.data_dim[2]
@@ -146,8 +147,18 @@ class AutoEncoder(object):
                                                     random_state=42)
         else:
             train_data = data
+
         print("Training sample size: " + str(train_data.shape))
         print("Validation sample size: " + str(val_data.shape))
+
+        data_train = DataLoader(
+            train_data,
+            batch_size=self.batch_size,
+            shuffle=True,
+            num_workers=0,
+            collate_fn=None,
+            pin_memory=False,
+        )
 
         # layers_D, layers_E = determine_layers(
         #         self.side, self.random_dim, self.num_channels)
@@ -176,22 +187,19 @@ class AutoEncoder(object):
             weight_decay=self.l2scale)
 
         #assert self.batch_size % 2 == 0
-
-        steps_per_epoch = max(len(train_data) // self.batch_size, 1)
-
-        #inception_model = keras.models.load_model('/home/stazt/BrainMRI/ctgan/inception.h5')
 ###################10. Start training ############################################################
         for i in range(self.epochs):
             self.decoder.train()  ##switch to train mode
             self.encoder.train()
             self.bn.train()
             self.trained_epoches += 1
-            for id_ in range(steps_per_epoch):
+
+            for batch_idx, samples in enumerate(data_train):
+                print(batch_idx)
+                print(samples.shape)
                 optimizerAE.zero_grad()
-                #emb = torch.from_numpy(train_data.astype('float32')).to(self.device)
-                indices = torch.randperm(len(train_data),device=self.device)[:self.batch_size]
-                batch = train_data[indices].unsqueeze(1)
-                encoded_data= self.encoder(batch)
+                batch = samples.unsqueeze(1)
+                encoded_data = self.encoder(batch)
                 bn_output = self.bn(encoded_data)
                 recon_x = self.decoder(bn_output)
 

@@ -22,8 +22,8 @@ def _parse_args():
     parser.add_argument("--torch_seed", default=0, type=int, metavar='', help="PyTorch random seed")
     parser.add_argument("--numpy_seed", default=0, type=int, metavar='', help="PyTorch random seed")
     parser.add_argument('--model', default=None, type=str, metavar='', help='ctgan, tablegan or tvae')
-    parser.add_argument('--datadir', default="/home/stazt/Public_Dataset", type=str, metavar='', help='path of training data directory')
-    parser.add_argument('--outputdir', default="/home/stazt/Public_Dataset", type=str, metavar='', help='path of output directory')
+    parser.add_argument('--datadir', default=None, type=str, metavar='', help='path of training data directory')
+    parser.add_argument('--outputdir', default=None, type=str, metavar='', help='path of output directory')
     #parser.add_argument('--data_fn', default=None, type=str, metavar='', help='filename of transformed training data (with .csv)')
     #parser.add_argument('--val_data_fn', default=None, type=str, metavar='', help='filename of validation data (with .csv)')
     # Optuna
