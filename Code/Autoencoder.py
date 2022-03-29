@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
-from torch.nn import BatchNorm3d, Conv3d, ConvTranspose3d, LeakyReLU, Module, ReLU, Sequential,Flatten, Linear, Sigmoid, Dropout, init, Tanh,functional
+from torch.nn import BatchNorm3d, DataParallel,Conv3d, ConvTranspose3d, LeakyReLU, Module, ReLU, Sequential,Flatten, Linear, Sigmoid, Dropout, init, Tanh,functional
 from torch.optim import Adam
 from torchsummary import summary
 from Code.config import AE_setting as cfg
@@ -117,7 +117,7 @@ class AutoEncoder(object):
         self.side = 0
         self.data_dim = 0
         self.logger = Logger()
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")  # NOTE: original implementation "cuda:0" if torch.cuda.is_available() else "cpu"
+        self.device = cfg.DEVICE  # NOTE: original implementation "cuda:0" if torch.cuda.is_available() else "cpu"
         self.train_loss_vec = []
         self.val_loss_vec = []
         self.Loss = cfg.LOSS
@@ -127,6 +127,7 @@ class AutoEncoder(object):
     # calculate frechet inception distance
 
     def fit(self, data, validation=True,model_summary=False,reload=False):
+
         if reload:
             self.trained_epoches = 0
 
@@ -151,14 +152,6 @@ class AutoEncoder(object):
         print("Training sample size: " + str(train_data.shape))
         print("Validation sample size: " + str(val_data.shape))
 
-        data_train = DataLoader(
-            train_data,
-            batch_size=self.batch_size,
-            shuffle=True,
-            num_workers=0,
-            collate_fn=None,
-            pin_memory=False,
-        )
 
         # layers_D, layers_E = determine_layers(
         #         self.side, self.random_dim, self.num_channels)
@@ -194,9 +187,16 @@ class AutoEncoder(object):
             self.bn.train()
             self.trained_epoches += 1
 
+            data_train = DataLoader(
+                train_data,
+                batch_size=self.batch_size,
+                shuffle=True,
+                num_workers=0,
+                collate_fn=None,
+                pin_memory=False,
+            )
+
             for batch_idx, samples in enumerate(data_train):
-                print(batch_idx)
-                print(samples.shape)
                 optimizerAE.zero_grad()
                 batch = samples.unsqueeze(1)
                 encoded_data = self.encoder(batch)
