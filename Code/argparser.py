@@ -22,11 +22,7 @@ def _parse_args():
     parser.add_argument("--torch_seed", default=0, type=int, metavar='', help="PyTorch random seed")
     parser.add_argument("--numpy_seed", default=0, type=int, metavar='', help="PyTorch random seed")
     parser.add_argument('--model', default=None, type=str, metavar='', help='ctgan, tablegan or tvae')
-    #parser.add_argument('--datadir', default="/workspace", type=str, metavar='', help='path of training data directory')
-    # parser.add_argument('--datadir',
-    #                     default="C:/Users/stazt/Documents/nBox/Project Ultron/Milestone 6/Optuna files/OVS1619/data",
-    #                     type=str, metavar='',
-    #                     help='path of training data directory')
+    parser.add_argument('--datadir', default="/home/stazt/Public_Dataset", type=str, metavar='', help='path of training data directory')
     parser.add_argument('--outputdir', default="/home/stazt/Public_Dataset", type=str, metavar='', help='path of output directory')
     #parser.add_argument('--data_fn', default=None, type=str, metavar='', help='filename of transformed training data (with .csv)')
     #parser.add_argument('--val_data_fn', default=None, type=str, metavar='', help='filename of validation data (with .csv)')
@@ -81,7 +77,7 @@ class ParserOutput:
         self.torch_seed = 0
         self.numpy_seed = 0
         self.model_type = None
-       # self.datadir = None
+        self.datadir = None
         self.outputdir = None
        # self.data_fn = None
        # self.discrete_fn = None
@@ -125,7 +121,7 @@ class ParserOutput:
         self.torch_seed = args.torch_seed
         self.numpy_seed = args.numpy_seed
         self.model_type = args.model.lower()
-       # self.datadir = args.datadir
+        self.datadir = args.datadir
         self.outputdir = args.outputdir
       #  self.data_fn = args.data_fn
        # self.val_data_fn = args.val_data_fn

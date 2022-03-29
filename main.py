@@ -14,13 +14,7 @@ import optuna
 from Code import config as cfg
 sys.path.append('/home/stazt/BrainMRI')
 from Code import Autoencoder
-filelist = glob.glob('/home/stazt/Public_Dataset/sub*')
-images = []
-for i in np.arange(len(filelist)):
-    img = nib.load(filelist[i])
-    images.append(img.get_fdata())
-data = torch.from_numpy(np.array(images)).float()
-train_val_data, testdata = train_test_split(data, test_size=0.15, random_state=42)
+
 
 
 '''
@@ -28,6 +22,15 @@ Run parser function to update inputs by the user.
 '''
 # update inputs
 parser = ParserOutput()
+
+filelist = glob.glob(parser.datadir)
+images = []
+for i in np.arange(len(filelist)):
+    img = nib.load(filelist[i])
+    images.append(img.get_fdata())
+data = torch.from_numpy(np.array(images)).float()
+train_val_data, testdata = train_test_split(data, test_size=0.15, random_state=42)
+
 
 # GLOBAL PARAMETERS
 # These parameters are needed in Optuna training and have to be placed outside of the functions.
