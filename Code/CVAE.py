@@ -11,7 +11,7 @@ from ctgan.logger import Logger
 
 ### added for validation
 from sklearn.model_selection import train_test_split
-# import ctgan.metric as M
+import Code.Metrics as M
 # import optuna
 
 ################################# 1. Define our neural networks ###################################################
@@ -85,17 +85,12 @@ class Decoder(Module):
         return output
 
 def loss_function(recon_x, x, mu, logvar, factor):
-    # Evidence loss lower bound
-    # See equation 10 in Kingma and Welling 2013. We need to maximize ELBO in this equation.
-    # That's equivalent to minimizing -ELBO, which is coded here.
-    # See also useful information in https://www.cs.princeton.edu/courses/archive/fall11/cos597C/lectures/variational-inference-i.pdf
-    #L2loss = (recon_x-x).square().mean()
-    loss = MSELoss()
-    L2loss = loss(recon_x, x)
+    ## This loss equals KLD + reconstruction error
+    loss = M.loss_fun(x, recon_x)
 
     KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
     # return average loss per batch
-    return L2loss * factor, KLD/(mu.size()[0]*mu.size()[1])
+    return loss * factor, KLD/(mu.size()[0]*mu.size()[1])
 
 ###########################3. Initialise weights ################################################################
 def weights_init(m):
@@ -112,7 +107,7 @@ def weights_init(m):
 
 
 ##################5. Creating the model ################################################
-class VAutoEncoder(object):
+class CVAutoEncoder(object):
     """docstring for TableganSynthesizer"""
 
     def __init__(self, l2scale=1e-5, trained_epoches = 0, log_frequency=True):
@@ -144,6 +139,7 @@ class VAutoEncoder(object):
         # NOTE: changed data_dim to self.data_dim. It'll be used later in sample function.
         self.data_dim = data.shape
         print('data dimension: ' + str(self.data_dim))
+        data = data.to(self.device, non_blocking=True)
 
         # compute side after transformation
         self.side = self.data_dim[2]
@@ -182,42 +178,58 @@ class VAutoEncoder(object):
 
         #assert self.batch_size % 2 == 0
 
-        steps_per_epoch = max(len(train_data) // self.batch_size, 1)
 
 ###################10. Start training ############################################################
         for i in range(self.epochs):
             self.decoder.train()  ##switch to train mode
             self.encoder.train()
             self.trained_epoches += 1
-            for id_ in range(steps_per_epoch):
+
+            data_train = DataLoader(
+                train_data,
+                batch_size=self.batch_size,
+                shuffle=True,
+                num_workers=0,
+                collate_fn=None,
+                pin_memory=False,
+            )
+
+            for batch_idx, samples in enumerate(data_train):
                 optimizerAE.zero_grad()
-                #emb = torch.from_numpy(train_data.astype('float32')).to(self.device)
-                indices = torch.randperm(len(train_data))[:self.batch_size]
-                batch = train_data[indices].unsqueeze(1)
+                batch = samples.unsqueeze(1)
                 mu, std, logvar = self.encoder(batch)
                 eps = torch.randn_like(std)
                 emb = eps * std + mu
                 rec = self.decoder(emb)
 
                 ################### 6. Calculate training loss #################################################################
-                loss_1, loss_2 = loss_function(
-                    rec, batch,  mu, logvar,  self.loss_factor)
+                ################### 6. Calculate training loss #################################################################
+                if self.device == 'cpu':
+                    loss_1, loss_2 = loss_function(
+                        rec, batch, mu, logvar, self.loss_factor)
+                else:
+                    loss_1, loss_2 = loss_function(
+                        rec.cpu(), batch.cpu(), mu.cpu(), logvar.cpu(), self.loss_factor)
+
                 loss = loss_1 + loss_2
-                self.train_loss_vec.append(loss.detach().cpu())
+                self.train_loss_vec.append(loss.detach().numpy())
                 loss.backward()
 
                 ################## 7. Updating the weights and biases using Adam Optimizer #######################################################
                 optimizerAE.step()
 
             print("Epoch " + str(self.trained_epoches) +
-                  ", Training Loss: " + str(loss.detach().cpu().numpy()))
+                  ", Training Loss: " + str(loss.detach().numpy()))
             if validation:
-                recon_val_data = self.sample(val_data.shape[0])
-                val_L2loss = MSELoss()
-                val_loss = val_L2loss(recon_val_data, val_data)
-                self.val_loss_vec.append(val_loss.detach().cpu())
+                recon_val_data = self.self.sample(val_data.shape[0])
+                if self.device == 'cpu':
+                    val_loss = M.loss_fun(val_data, recon_val_data)
+                else:
+                    val_loss = M.loss_fun(val_data.cpu(), recon_val_data.cpu())
+                self.val_loss_vec.append(val_loss.detach().numpy())
                 print("Epoch " + str(self.trained_epoches) +
-                      ", Validation Loss: " + str(val_loss.detach().cpu().numpy()))
+                      ", Validation Loss: " + str(val_loss.detach().numpy()))
+
 
 
 
@@ -232,7 +244,7 @@ class VAutoEncoder(object):
             std = mean + 1
 
             fakez = torch.normal(mean=mean, std=std).to(self.device)
-            fake= self.decoder(fakez)
+            fake = self.decoder(fakez)
             data.append(fake)
         data = torch.cat(data, axis=0)
         data = data[:samples]
