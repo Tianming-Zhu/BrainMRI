@@ -4,6 +4,7 @@ from torch.nn import L1Loss, MSELoss
 from torch.autograd import Variable
 from Code.config import AE_setting as cfg
 from skimage.metrics import structural_similarity as ssim
+from skimage.transform import resize
 from tensorflow.keras.applications.inception_v3 import InceptionV3
 from scipy.linalg import sqrtm
 
@@ -15,18 +16,12 @@ def loss_fun(real, fake):
         L2 = MSELoss()
         return L2(real, fake)
     if cfg.LOSS == 'ssim':
-        # ssim_loss = 1-ssim(real.squeeze(1).detach().numpy(), fake.squeeze(1).detach().numpy(), channel_axis=0)
-        # ssim_loss = torch.from_numpy(np.array(ssim_loss)).to(cfg.DEVICE)
-        # ssim_loss = Variable(ssim_loss,requires_grad=True)
         return ssim_3D(real,fake)
     if cfg.LOSS == 'weighted':
         L1 = L1Loss()
         L2 = MSELoss()
-        ssim_loss = 1 - ssim(real.squeeze(1).detach().numpy(), fake.squeeze(1).detach().numpy(), channel_axis=0)
-        ssim_loss = torch.from_numpy(np.array(ssim_loss)).to(cfg.DEVICE)
-        ssim_loss = Variable(ssim_loss, requires_grad=True)
-        return 0.5*L1(real,fake) + 0.5*L2(real,fake)+0.5*ssim_loss/2
-    if cfg.LOSS == 'fid':
+        return 0.5*L1(real,fake) + 0.5*L2(real,fake)+0.5*ssim_3D(real,fake)/2
+    if cfg.LOSS == 'fid': ## This may not work for the server
         inception_model = InceptionV3(include_top=False, pooling='avg', input_shape=(299, 299, 3))
         loss = calculate_fid(inception_model, real, fake)
         loss = Variable(loss,requires_grad = True)
