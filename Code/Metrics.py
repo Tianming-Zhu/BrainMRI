@@ -1,8 +1,9 @@
 import torch
 import numpy as np
 from torch.nn import L1Loss, MSELoss
+from torch.autograd import Variable
 from Code.config import AE_setting as cfg
-#from pytorch_ssim_3D.pytorch_ssim import SSIM3D
+from skimage.metrics import structural_similarity as ssim
 from tensorflow.keras.applications.inception_v3 import InceptionV3
 from scipy.linalg import sqrtm
 
@@ -13,17 +14,40 @@ def loss_fun(real, fake):
     if cfg.LOSS == 'l2':
         L2 = MSELoss()
         return L2(real, fake)
-    # if cfg.LOSS == 'ssim':
-    #     ssim_loss = SSIM3D()
-    #     return 1-ssim_loss(real, fake)
-    # if cfg.LOSS == 'fid':
-    #     inception_model = InceptionV3(include_top=False, pooling='avg', input_shape=(299, 299, 3))
-    #     loss = calculate_fid(inception_model, real, fake)
-    #     loss.requires_grad = True
-    #     return loss
+    if cfg.LOSS == 'ssim':
+        # ssim_loss = 1-ssim(real.squeeze(1).detach().numpy(), fake.squeeze(1).detach().numpy(), channel_axis=0)
+        # ssim_loss = torch.from_numpy(np.array(ssim_loss)).to(cfg.DEVICE)
+        # ssim_loss = Variable(ssim_loss,requires_grad=True)
+        return ssim_3D(real,fake)
+    if cfg.LOSS == 'weighted':
+        L1 = L1Loss()
+        L2 = MSELoss()
+        ssim_loss = 1 - ssim(real.squeeze(1).detach().numpy(), fake.squeeze(1).detach().numpy(), channel_axis=0)
+        ssim_loss = torch.from_numpy(np.array(ssim_loss)).to(cfg.DEVICE)
+        ssim_loss = Variable(ssim_loss, requires_grad=True)
+        return 0.5*L1(real,fake) + 0.5*L2(real,fake)+0.5*ssim_loss/2
+    if cfg.LOSS == 'fid':
+        inception_model = InceptionV3(include_top=False, pooling='avg', input_shape=(299, 299, 3))
+        loss = calculate_fid(inception_model, real, fake)
+        loss = Variable(loss,requires_grad = True)
+        return loss
     else:
         print("This metric is not available.")
 
+def ssim_3D(real, fake,device = cfg.DEVICE):
+    if torch.is_tensor(real):
+        real = real.detach().numpy()
+        fake = fake.detach().numpy()
+    loss = 0
+    for i in np.arange(len(real)):
+        if len(real[i].shape) == 4:
+            loss += 1 - ssim(real[i].squeeze(0), fake[i].squeeze(0), channel_axis=0)
+        else:
+            loss += 1 - ssim(real[i], fake[i], channel_axis=0)
+    ssim_loss = loss/len(real)
+    ssim_loss = torch.from_numpy(np.array(ssim_loss)).to(device)
+    ssim_loss = Variable(ssim_loss, requires_grad=True)
+    return ssim_loss
 
 ## scale an array of images to a new size
 def scale_images(images, new_shape):

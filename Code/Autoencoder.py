@@ -208,10 +208,11 @@ class AutoEncoder(object):
                     loss = M.loss_fun(batch, recon_x)
                 else:
                     loss = M.loss_fun(batch.cpu(),recon_x.cpu())
-                self.train_loss_vec.append(loss.detach().numpy())
+
                 loss.backward()
                 ################## 7. Updating the weights and biases using Adam Optimizer #######################################################
                 optimizerAE.step()
+            self.train_loss_vec.append(loss.detach().numpy())
             print("Epoch " + str(self.trained_epoches) +
                                       ", Training Loss: " + str(loss.detach().numpy()))
             if validation:
