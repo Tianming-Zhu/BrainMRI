@@ -1,12 +1,13 @@
 import numpy as np
 import torch
+from torch.utils.data import DataLoader
 from torch.nn import L1Loss, BatchNorm3d, Conv3d, ConvTranspose3d, LeakyReLU, MSELoss, Module, ReLU, Sequential,Flatten, Linear, Sigmoid, Dropout, init, Tanh,functional
 from torch.nn.functional import binary_cross_entropy_with_logits
 from torch.optim import Adam
 from torchsummary import summary
 
-from ctgan.config import tablegan_setting as cfg
-from ctgan.logger import Logger
+from Code.config import CVAE_setting as cfg
+from Code.logger import Logger
 # NOTE: Added conditional generator to the code.
 
 ### added for validation
@@ -123,7 +124,7 @@ class CVAutoEncoder(object):
         self.side = 0
         self.data_dim = 0
         self.logger = Logger()
-        self.loss_factor = 1
+        self.loss_factor = cfg.LOSS_FACTOR
         self.device = torch.device(cfg.DEVICE)  # NOTE: original implementation "cuda:0" if torch.cuda.is_available() else "cpu"
         self.train_loss_vec = []
         self.val_loss_vec = []
@@ -221,7 +222,7 @@ class CVAutoEncoder(object):
             print("Epoch " + str(self.trained_epoches) +
                   ", Training Loss: " + str(loss.detach().numpy()))
             if validation:
-                recon_val_data = self.self.sample(val_data.shape[0])
+                recon_val_data = self.sample(val_data.shape[0])
                 if self.device == 'cpu':
                     val_loss = M.loss_fun(val_data, recon_val_data)
                 else:

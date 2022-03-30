@@ -15,7 +15,7 @@ from Code.logger import Logger
 import optuna
 from Code import config as cfg
 sys.path.append('/home/stazt/BrainMRI')
-from Code import Autoencoder
+from Code import Autoencoder, CVAE
 
 
 
@@ -79,8 +79,8 @@ def run_individual_training():
         # if torch.cuda.device_count() > 1:
         #     print("Let's use " + str(torch.cuda.device_count()) + " GPUs!")
         #     model = nn.DataParallel(model)
-    elif parser.model_type == 'CVAE':
-        model = CVAE.VAutoEncoder()
+    elif parser.model_type == 'cvae':
+        model = CVAE.CVAutoEncoder()
     else:
         ValueError('The selected model, ' + parser.model_type + ', is invalid.')
 
