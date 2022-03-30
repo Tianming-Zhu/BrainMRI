@@ -33,13 +33,13 @@ def ssim_3D(real, fake,device = cfg.DEVICE):
     if torch.is_tensor(real):
         real = real.detach().numpy()
         fake = fake.detach().numpy()
-    loss = 0
+    loss = []
     for i in np.arange(len(real)):
         if len(real[i].shape) == 4:
-            loss += 1 - ssim(real[i].squeeze(0), fake[i].squeeze(0), channel_axis=0)
+            loss.append(1 - ssim(real[i].squeeze(0), fake[i].squeeze(0), channel_axis=0))
         else:
-            loss += 1 - ssim(real[i], fake[i], channel_axis=0)
-    ssim_loss = loss/len(real)
+            loss.append(1 - ssim(real[i], fake[i], channel_axis=0))
+    ssim_loss = np.mean(loss)
     ssim_loss = torch.from_numpy(np.array(ssim_loss)).to(device)
     ssim_loss = Variable(ssim_loss, requires_grad=True)
     return ssim_loss
