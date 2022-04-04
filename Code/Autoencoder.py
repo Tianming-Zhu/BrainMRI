@@ -121,12 +121,12 @@ class AutoEncoder(object):
         self.train_loss_vec = []
         self.val_loss_vec = []
         self.Loss = cfg.LOSS
-        #self.optuna_metric = None
+        self.optuna_metric = None
 
 
     # calculate frechet inception distance
 
-    def fit(self, data, validation=True,model_summary=False,reload=False):
+    def fit(self, data, validation=True,model_summary=False,reload=False,trial=None):
 
         if reload:
             self.trained_epoches = 0
@@ -151,6 +151,9 @@ class AutoEncoder(object):
 
         self.logger.write_to_file("Training sample size: " + str(train_data.shape))
         self.logger.write_to_file("Validation sample size: " + str(val_data.shape))
+
+        self.logger.write_to_file("Number of epochs: " + str(self.epochs))
+        self.logger.write_to_file("Metric: " + str(self.Loss))
 
 
         # layers_D, layers_E = determine_layers(
@@ -215,6 +218,7 @@ class AutoEncoder(object):
             self.train_loss_vec.append(loss.detach().numpy())
             self.logger.write_to_file("Epoch " + str(self.trained_epoches) +
                                       ", Training Loss: " + str(loss.detach().numpy()))
+
             if validation:
                 recon_val_data = self.reconstruct(val_data)
                 if self.device == 'cpu':
@@ -224,6 +228,12 @@ class AutoEncoder(object):
                 self.val_loss_vec.append(val_loss.detach().numpy())
                 self.logger.write_to_file("Epoch " + str(self.trained_epoches) +
                       ", Validation Loss: " + str(val_loss.detach().numpy()))
+
+                if trial is not None:
+                    self.optuna_metric = val_loss.detach().numpy()
+                    trial.report(self.optuna_metric, i)
+                    if trial.should_prune():
+                        raise optuna.exceptions.TrialPruned()
 
     def reconstruct(self,data):
         self.encoder.eval()  ## switch to evaluate mode

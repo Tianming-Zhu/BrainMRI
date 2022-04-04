@@ -135,7 +135,7 @@ def run_optuna_training():
         # NOTE: uncomment the cfg.(respective hyper-parameters) if we want Optuna to vary more variables.
         if parser.model_type == 'ae':
             cfg.AE_setting.LEARNING_RATE = trial.suggest_categorical('ae_lr', [2e-4, 1e-4, 2e-3, 1e-3])
-            cfg.AE_setting.EPOCHS = trial.suggest_int('ae_epochs', 100, 400, step=100)
+            cfg.AE_setting.EPOCHS = trial.suggest_int('ae_epochs', 10, 40, step=10)
             cfg.AE_setting.BATCH_SIZE = trial.suggest_int('ae_batchsize', 20, 50, step=10)
             cfg.AE_setting.EMBEDDING = trial.suggest_int('ae_embedding', 64, 256, step=64)
             cfg.AE_setting.NUM_CHANNELS = trial.suggest_int('ae_num_channels', 2, 4, step=2)
@@ -181,7 +181,7 @@ def run_optuna_training():
         start_time = time.time()
 
         # model.fit(data, discrete_columns)
-        model.fit(train_val_data, validation=True, model_summary=False)
+        model.fit(train_val_data, validation=True, model_summary=False,trial=trial)
 
         elapsed_time = time.time() - start_time
         model.logger.write_to_file("Training time {:.2f} seconds".format(elapsed_time), True)
@@ -268,6 +268,7 @@ def run_optuna_training():
     optuna_logger.write_to_file("Best trial:")
     trial = study.best_trial
 
+
     optuna_logger.write_to_file("  Value: " + str(trial.value))
 
     optuna_logger.write_to_file("  Params: ")
@@ -277,13 +278,13 @@ def run_optuna_training():
     optuna_logger.write_to_file(study.trials_dataframe().sort_values(by='value', ascending=True).to_string(header=True, index=False))
 
     # Generate synthetic data with each save model
-    for mdl_fn in mdl_fns:
-        filepath = optuna_logger.dirpath + "/" + mdl_fn + ".pkl"
-        sample_fn = mdl_fn + "_sample.csv"
-        output_sample_path = os.path.join(optuna_logger.dirpath, sample_fn)
-        temp_mdl = torch.load(filepath, map_location=torch.device('cpu'))
-        samples = temp_mdl.sample(parser.samplesize, condition_column=None, condition_value=None)
-        samples.to_csv(output_sample_path, index=False, header=True)
+    # for mdl_fn in mdl_fns:
+    #     filepath = optuna_logger.dirpath + "/" + mdl_fn + ".pkl"
+    #     sample_fn = mdl_fn + "_sample.csv"
+    #     output_sample_path = os.path.join(optuna_logger.dirpath, sample_fn)
+    #     temp_mdl = torch.load(filepath, map_location=torch.device('cpu'))
+    #     samples = temp_mdl.sample(parser.samplesize, condition_column=None, condition_value=None)
+    #     samples.to_csv(output_sample_path, index=False, header=True)
 
 
 if __name__ == "__main__":
