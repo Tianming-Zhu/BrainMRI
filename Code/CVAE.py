@@ -139,14 +139,14 @@ class CVAutoEncoder(object):
 
         # NOTE: changed data_dim to self.data_dim. It'll be used later in sample function.
         self.data_dim = data.shape
-        print('data dimension: ' + str(self.data_dim))
+        self.logger.write_to_file('data dimension: ' + str(self.data_dim))
         data = data.to(self.device, non_blocking=True)
 
         # compute side after transformation
         self.side = self.data_dim[2]
         self.depth = self.data_dim[1]
-        print('side is: ' + str(self.side))
-        print('depth is: ' + str(self.depth))
+        self.logger.write_to_file('side is: ' + str(self.side))
+        self.logger.write_to_file('depth is: ' + str(self.depth))
         temp_test_size = 15 / (70 + 15)
         exact_val_size = int(temp_test_size * data.shape[0])
         if validation:
@@ -219,7 +219,7 @@ class CVAutoEncoder(object):
                 ################## 7. Updating the weights and biases using Adam Optimizer #######################################################
                 optimizerAE.step()
 
-            print("Epoch " + str(self.trained_epoches) +
+            self.logger.write_to_file("Epoch " + str(self.trained_epoches) +
                   ", Training Loss: " + str(loss.detach().numpy()))
             if validation:
                 recon_val_data = self.sample(val_data.shape[0])
@@ -228,7 +228,7 @@ class CVAutoEncoder(object):
                 else:
                     val_loss = M.loss_fun(val_data.cpu(), recon_val_data.cpu())
                 self.val_loss_vec.append(val_loss.detach().numpy())
-                print("Epoch " + str(self.trained_epoches) +
+                self.logger.write_to_file("Epoch " + str(self.trained_epoches) +
                       ", Validation Loss: " + str(val_loss.detach().numpy()))
 
 
