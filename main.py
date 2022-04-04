@@ -38,10 +38,10 @@ train_val_data, test_data = train_test_split(data, test_size=0.15, random_state=
 # These parameters are needed in Optuna training and have to be placed outside of the functions.
 # model to be trained
 model = None
-# to record the top num_max_mdls models
-metric_vals = []
-mdl_fns = []
-num_max_mdls = parser.max_num_mdls
+# # to record the top num_max_mdls models
+# metric_vals = []
+# mdl_fns = []
+# num_max_mdls = parser.max_num_mdls
 
 # def get_train_data():
 #     # get paths
@@ -111,9 +111,9 @@ def run_individual_training():
 
 def run_optuna_training():
     # function to sort two lists together
-    def sortlists(metrics, fns):
-        metrics_sorted, fns_sorted = (list(t) for t in zip(*sorted(zip(metrics, fns))))
-        return metrics_sorted, fns_sorted
+    # def sortlists(metrics, fns):
+    #     metrics_sorted, fns_sorted = (list(t) for t in zip(*sorted(zip(metrics, fns))))
+    #     return metrics_sorted, fns_sorted
 
     # logger to save optuna statistics
     optuna_logger = Logger(filename="optuna_trials_summary.txt")
@@ -133,37 +133,32 @@ def run_optuna_training():
         np.random.seed(this_seed)
 
         # NOTE: uncomment the cfg.(respective hyper-parameters) if we want Optuna to vary more variables.
-        if parser.model_type == 'ctgan':
-            cfg.ctgan_setting.GENERATOR_LEARNING_RATE = trial.suggest_categorical('ct_gen_lr', [1e-6, 2e-6, 1e-5, 2e-5])
-            #cfg.ctgan_setting.DISCRIMINATOR_LEARNING_RATE = trial.suggest_categorical('ct_dis_lr', [1e-6, 2e-6, 1e-5, 2e-5])
-            #cfg.ctgan_setting.EPOCHS = trial.suggest_int('ct_epochs', 600, 900, step=100)
-            # cfg.ctgan_setting.BATCH_SIZE = trial.suggest_int('ct_batchsize', 500, 1000, step=100)
-            # cfg.ctgan_setting.DEPTH = trial.suggest_int('ct_depth', 1, 3)
-            # cfg.ctgan_setting.WIDTH = trial.suggest_int('ct_width', 128, 512, step=64)
-            # # cfg.ctgan_setting.EMBEDDING = trial.suggest_int('ct_embedding', 128, 512, step=64)
-            # cfg.ctgan_setting.DROPOUT = trial.suggest_categorical('ct_dropout', [0.25, 0.5])
+        if parser.model_type == 'ae':
+            cfg.AE_setting.LEARNING_RATE = trial.suggest_categorical('ae_lr', [2e-4, 1e-4, 2e-3, 1e-3])
+            cfg.AE_setting.EPOCHS = trial.suggest_int('ae_epochs', 100, 400, step=100)
+            cfg.AE_setting.BATCH_SIZE = trial.suggest_int('ae_batchsize', 20, 50, step=10)
+            cfg.AE_setting.EMBEDDING = trial.suggest_int('ae_embedding', 64, 256, step=64)
+            cfg.AE_setting.NUM_CHANNELS = trial.suggest_int('ae_num_channels', 2, 4, step=2)
+            cfg.AE_setting.STRIDE = trial.suggest_int('ae_stride',2,4,step=2)
+            cfg.AE_setting.KERNEL_SIZE = trial.suggest_int('ae_kernel',2,4,step=2)
+            cfg.AE_setting.LOSS = trial.suggest_categorical('ae_loss',['l1','l2','ssim','weighted'])
+            cfg.AE_setting.DROPOUT = trial.suggest_categorical('ae_dropout', [0.25, 0.5])
 
-            model = CTGANSynthesizer()  # initialize a new model
+            model = Autoencoder.AutoEncoder()  # initialize a new model
 
-        elif parser.model_type == 'tablegan':
-            cfg.tablegan_setting.LEARNING_RATE = trial.suggest_categorical('tbl_lr', [2e-6, 5e-6, 1e-5])
-            # cfg.tablegan_setting.BATCH_SIZE = trial.suggest_int('tbl_batchsize', 500, 800, step=100)
-            # cfg.tablegan_setting.EPOCHS = trial.suggest_int('tbl_epochs', 150, 300, step=50)
 
-            model = TableganSynthesizer()  # initialize a new model
-
-        elif parser.model_type == 'tvae':
-            cfg.tvae_setting.LEARNING_RATE = trial.suggest_categorical('tv_lr', [1e-5, 1e-4, 1e-3])  # 1e-2 results in non-decreasing loss
-            # cfg.tvae_setting.EPOCHS = trial.suggest_int('tv_epochs', 300, 900, step=100)
-            # cfg.tvae_setting.BATCH_SIZE = trial.suggest_int('tv_batchsize', 500, 1000, step=100)
-            # cfg.tvae_setting.DEPTH = trial.suggest_int('tv_depth', 1, 4)
-            # cfg.tvae_setting.WIDTH = trial.suggest_int('tv_width', 128, 512, step=64)
-            # cfg.tvae_setting.EMBEDDING = trial.suggest_int('tv_embedding', 128, 512, step=64)
-            # # cfg.tvae_setting.CONDGEN = trial.suggest_categorical('tv_condgen', [True, False])
-            # cfg.tvae_setting.CONDGEN_ENCODER = trial.suggest_categorical('tv_condgen_encoder', [True, False])
-            # cfg.tvae_setting.CONDGEN_LATENT = trial.suggest_categorical('tv_condgen_latent', [True, False])
-
-            model = TVAESynthesizer() # initialize a new model
+        elif parser.model_type == 'cvae':
+            cfg.CAE_setting.LEARNING_RATE = trial.suggest_categorical('cae_lr', [2e-4, 1e-4, 2e-3, 1e-3])
+            cfg.CAE_setting.EPOCHS = trial.suggest_int('cae_epochs', 100, 400, step=100)
+            cfg.CAE_setting.BATCH_SIZE = trial.suggest_int('cae_batchsize', 20, 50, step=10)
+            cfg.CAE_setting.EMBEDDING = trial.suggest_int('cae_embedding', 64, 256, step=64)
+            cfg.CAE_setting.NUM_CHANNELS = trial.suggest_int('cae_num_channels', 2, 4, step=2)
+            cfg.CAE_setting.STRIDE = trial.suggest_int('cae_stride', 2, 4, step=2)
+            cfg.CAE_setting.KERNEL_SIZE = trial.suggest_int('cae_kernel', 2, 4, step=2)
+            cfg.CAE_setting.LOSS = trial.suggest_categorical('cae_loss', ['l1', 'l2', 'ssim', 'weighted'])
+            cfg.CAE_setting.LOSS_FACTOR = trial.suggest_int('cae_loss_factor', 1, 2)
+            cfg.CAE_setting.DROPOUT = trial.suggest_categorical('cae_dropout', [0.25, 0.5])
+            model = CVAE.CVAutoEncoder() # initialize a new model
 
         else:
             ValueError('The selected model, ' + parser.model_type + ', is invalid.')
@@ -180,14 +175,13 @@ def run_optuna_training():
         model.logger.write_to_file('PyTorch seed number ' + str(this_seed))
         model.logger.write_to_file('Numpy seed number ' + str(this_seed))
 
-        data, discrete_columns = get_train_data()
+        #data, discrete_columns = get_train_data()
 
         # Train the model
         start_time = time.time()
 
         # model.fit(data, discrete_columns)
-        model.fit(data, discrete_columns, model_summary=False, trans="VGM", trial=trial,
-                  transformer=parser.transformer, in_val_data=parser.val_data)
+        model.fit(train_val_data, validation=True, model_summary=False)
 
         elapsed_time = time.time() - start_time
         model.logger.write_to_file("Training time {:.2f} seconds".format(elapsed_time), True)
@@ -203,26 +197,27 @@ def run_optuna_training():
                         + optuna_logger.dt.now().strftime(optuna_logger.datetimeformat)
 
         if trial.state == optuna.trial.TrialState.COMPLETE:
-            if len(metric_vals) < num_max_mdls:
-                metric_vals.append(model.optuna_metric)
-                mdl_fns.append(this_model_fn)
-                metric_vals, mdl_fns = sortlists(metric_vals, mdl_fns)
-
-                model.save(optuna_logger.dirpath + "/" + this_model_fn + ".pkl")
-            else:
-                if model.optuna_metric < metric_vals[-1]:
-                    # remove the previously saved model
-                    metric_vals.pop()
-                    mdl_fn_discard = mdl_fns.pop()
-
-                    os.remove(optuna_logger.dirpath + "/" + mdl_fn_discard + ".pkl")
-
-                    # add the new record
-                    metric_vals.append(model.optuna_metric)
-                    mdl_fns.append(this_model_fn)
-                    metric_vals, mdl_fns = sortlists(metric_vals, mdl_fns)
-
-                    model.save(optuna_logger.dirpath + "/" + this_model_fn + ".pkl")
+            model.save(optuna_logger.dirpath + "/" + this_model_fn + ".pkl")
+            # if len(metric_vals) < num_max_mdls:
+            #     metric_vals.append(model.optuna_metric)
+            #     mdl_fns.append(this_model_fn)
+            #     metric_vals, mdl_fns = sortlists(metric_vals, mdl_fns)
+            #
+            #     model.save(optuna_logger.dirpath + "/" + this_model_fn + ".pkl")
+            # else:
+            #     if model.optuna_metric < metric_vals[-1]:
+            #         # remove the previously saved model
+            #         metric_vals.pop()
+            #         mdl_fn_discard = mdl_fns.pop()
+            #
+            #         os.remove(optuna_logger.dirpath + "/" + mdl_fn_discard + ".pkl")
+            #
+            #         # add the new record
+            #         metric_vals.append(model.optuna_metric)
+            #         mdl_fns.append(this_model_fn)
+            #         metric_vals, mdl_fns = sortlists(metric_vals, mdl_fns)
+            #
+            #         model.save(optuna_logger.dirpath + "/" + this_model_fn + ".pkl")
 
         # write intermediate Optuna training results, in case the training crashes, eg. core dumped error.
         optuna_logger.write_to_file("Trial: {}, Metric: {}, Status: {}, model fn: {} ".format(

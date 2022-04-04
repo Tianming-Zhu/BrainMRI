@@ -29,7 +29,7 @@ def _parse_args():
     # Optuna
     parser.add_argument('--use_optuna', default=False, type=str2bool, metavar='', help='set True to use Optuna')
     parser.add_argument('--trials', default=10, type=int, metavar='', help='Number of Optuna trials')
-    parser.add_argument('--max_num_mdls', default=5, type=int, metavar='',  help='Number of Optuna trials')
+   # parser.add_argument('--max_num_mdls', default=5, type=int, metavar='',  help='Number of Optuna trials')
     parser.add_argument('--pruner', default=True, type=str2bool, metavar='', help='use Optuna pruner')
     parser.add_argument('--warmup_steps', default=0, type=int, metavar='', help='Optuna median pruner warm-up')
 
