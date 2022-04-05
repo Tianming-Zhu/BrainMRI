@@ -39,9 +39,9 @@ train_val_data, test_data = train_test_split(data, test_size=0.15, random_state=
 # model to be trained
 model = None
 # # to record the top num_max_mdls models
-# metric_vals = []
-# mdl_fns = []
-# num_max_mdls = parser.max_num_mdls
+metric_vals = []
+mdl_fns = []
+num_max_mdls = parser.max_num_mdls
 
 # def get_train_data():
 #     # get paths
@@ -111,9 +111,9 @@ def run_individual_training():
 
 def run_optuna_training():
     # function to sort two lists together
-    # def sortlists(metrics, fns):
-    #     metrics_sorted, fns_sorted = (list(t) for t in zip(*sorted(zip(metrics, fns))))
-    #     return metrics_sorted, fns_sorted
+    def sortlists(metrics, fns):
+        metrics_sorted, fns_sorted = (list(t) for t in zip(*sorted(zip(metrics, fns))))
+        return metrics_sorted, fns_sorted
 
     # logger to save optuna statistics
     optuna_logger = Logger(filename="optuna_trials_summary.txt")
@@ -138,9 +138,9 @@ def run_optuna_training():
             cfg.AE_setting.EPOCHS = trial.suggest_int('ae_epochs', 10, 40, step=10)
             cfg.AE_setting.BATCH_SIZE = trial.suggest_int('ae_batchsize', 20, 50, step=10)
             cfg.AE_setting.EMBEDDING = trial.suggest_int('ae_embedding', 64, 256, step=64)
-            cfg.AE_setting.NUM_CHANNELS = trial.suggest_int('ae_num_channels', 2, 4, step=2)
-            cfg.AE_setting.STRIDE = trial.suggest_int('ae_stride',2,4,step=2)
-            cfg.AE_setting.KERNEL_SIZE = trial.suggest_int('ae_kernel',2,4,step=2)
+            cfg.AE_setting.NUM_CHANNELS = trial.suggest_int('ae_num_channels', 2, 4)
+            cfg.AE_setting.STRIDE = trial.suggest_int('ae_stride',2,3)
+            cfg.AE_setting.KERNEL_SIZE = trial.suggest_int('ae_kernel',2,4,step=1)
             cfg.AE_setting.LOSS = trial.suggest_categorical('ae_loss',['l1','l2','ssim','weighted'])
             cfg.AE_setting.DROPOUT = trial.suggest_categorical('ae_dropout', [0.25, 0.5])
 
@@ -197,27 +197,27 @@ def run_optuna_training():
                         + optuna_logger.dt.now().strftime(optuna_logger.datetimeformat)
 
         if trial.state == optuna.trial.TrialState.COMPLETE:
-            model.save(optuna_logger.dirpath + "/" + this_model_fn + ".pkl")
-            # if len(metric_vals) < num_max_mdls:
-            #     metric_vals.append(model.optuna_metric)
-            #     mdl_fns.append(this_model_fn)
-            #     metric_vals, mdl_fns = sortlists(metric_vals, mdl_fns)
-            #
-            #     model.save(optuna_logger.dirpath + "/" + this_model_fn + ".pkl")
-            # else:
-            #     if model.optuna_metric < metric_vals[-1]:
-            #         # remove the previously saved model
-            #         metric_vals.pop()
-            #         mdl_fn_discard = mdl_fns.pop()
-            #
-            #         os.remove(optuna_logger.dirpath + "/" + mdl_fn_discard + ".pkl")
-            #
-            #         # add the new record
-            #         metric_vals.append(model.optuna_metric)
-            #         mdl_fns.append(this_model_fn)
-            #         metric_vals, mdl_fns = sortlists(metric_vals, mdl_fns)
-            #
-            #         model.save(optuna_logger.dirpath + "/" + this_model_fn + ".pkl")
+            #model.save(optuna_logger.dirpath + "/" + this_model_fn + ".pkl")
+            if len(metric_vals) < num_max_mdls:
+                metric_vals.append(model.optuna_metric)
+                mdl_fns.append(this_model_fn)
+                metric_vals, mdl_fns = sortlists(metric_vals, mdl_fns)
+
+                model.save(optuna_logger.dirpath + "/" + this_model_fn + ".pkl")
+            else:
+                if model.optuna_metric < metric_vals[-1]:
+                    # remove the previously saved model
+                    metric_vals.pop()
+                    mdl_fn_discard = mdl_fns.pop()
+
+                    os.remove(optuna_logger.dirpath + "/" + mdl_fn_discard + ".pkl")
+
+                    # add the new record
+                    metric_vals.append(model.optuna_metric)
+                    mdl_fns.append(this_model_fn)
+                    metric_vals, mdl_fns = sortlists(metric_vals, mdl_fns)
+
+                    model.save(optuna_logger.dirpath + "/" + this_model_fn + ".pkl")
 
         # write intermediate Optuna training results, in case the training crashes, eg. core dumped error.
         optuna_logger.write_to_file("Trial: {}, Metric: {}, Status: {}, model fn: {} ".format(

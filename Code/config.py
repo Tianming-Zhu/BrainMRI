@@ -10,7 +10,7 @@ class AE_setting:
     SCALE_FACTOR = 2  # This is fixed
     LEARNING_RATE = 2e-4
     BATCH_SIZE = 50
-    EPOCHS = 2 # 300
+    EPOCHS = 30 # 300
     DEVICE = "cpu"  # "cuda:0"
     DROPOUT = 0.5
     LOSS = 'l1'
@@ -23,7 +23,7 @@ class CVAE_setting:
     SCALE_FACTOR = 2  # This is fixed
     LEARNING_RATE = 2e-4
     BATCH_SIZE = 50
-    EPOCHS = 2  # 300
+    EPOCHS = 30  # 300
     DEVICE = "cpu"  # "cuda:0"
     DROPOUT = 0.5
     LOSS = 'l1'

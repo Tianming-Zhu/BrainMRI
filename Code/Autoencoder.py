@@ -26,11 +26,12 @@ class Encoder(Module):
 
         layer_dims = [(1, side), (num_channels, side // cfg.SCALE_FACTOR)]
 
-        while layer_dims[-1][1] > 3 and len(layer_dims) < 5:  ## max of 5 for the case side = 64
+        while layer_dims[-1][1] > 3 and len(layer_dims) < 4:  ## max of 5 for the case side = 64
             layer_dims.append(
                 (layer_dims[-1][0] * cfg.SCALE_FACTOR, layer_dims[-1][1] // cfg.SCALE_FACTOR))
         # layers of Decoder
-        self.encoded_side = side
+        self.encoded_side = []
+        encoded_side = side
         seq = []
         for prev, curr in zip(layer_dims, layer_dims[1:]):
             seq += [
@@ -42,7 +43,8 @@ class Encoder(Module):
                 ReLU(True)
             ]
             self.encoded_channel = curr[0]
-            self.encoded_side = np.floor((self.encoded_side - cfg.KERNEL_SIZE) / cfg.STRIDE + 1)
+            self.encoded_side.append(np.floor((encoded_side - cfg.KERNEL_SIZE) / cfg.STRIDE + 1))
+            encoded_side = self.encoded_side[-1]
         self.seq = Sequential(*seq)
 
     def forward(self, input):
@@ -63,20 +65,20 @@ class Bottleneck(Module):
 
 
 class Decoder(Module):
-    def __init__(self, side, num_channels):
+    def __init__(self, side, num_channels, decoder_side):
         super(Decoder, self).__init__()
         layer_dims = [(1, side), (num_channels, side // cfg.SCALE_FACTOR)]
-
-        while layer_dims[-1][1] > 3 and len(layer_dims) < 5:  ## max of 5 for the case side = 64
+        decoder_side.insert(0,side)
+        while layer_dims[-1][1] > 3 and len(layer_dims) < 4:  ## max of 5 for the case side = 64
             layer_dims.append(
                 (layer_dims[-1][0] * cfg.SCALE_FACTOR, layer_dims[-1][1] // cfg.SCALE_FACTOR))
         seq = []
-        for prev, curr in zip(reversed(layer_dims), reversed(layer_dims[:-1])):
+        for prev, curr, side1, side2 in zip(reversed(layer_dims), reversed(layer_dims[:-1]), reversed(decoder_side[:-1]), reversed(decoder_side[1:])):
             seq += [
                 BatchNorm3d(prev[0]),
                 #LeakyReLU(0.2, inplace=True),
                 ReLU(True),
-                ConvTranspose3d(prev[0], curr[0], cfg.KERNEL_SIZE, cfg.STRIDE, output_padding=0, bias=False)
+                ConvTranspose3d(prev[0], curr[0], cfg.KERNEL_SIZE, cfg.STRIDE, output_padding=int(side1-(side2-1)*cfg.STRIDE-cfg.KERNEL_SIZE), bias=False)
             ]
         seq += [ReLU(True)]
         self.seq = Sequential(*seq)
@@ -161,8 +163,8 @@ class AutoEncoder(object):
 
         if not reload:
             self.encoder = Encoder(self.side, self.num_channels).to(self.device)
-            self.bn = Bottleneck(self.encoder.encoded_channel,self.encoder.encoded_side).to(self.device)
-            self.decoder = Decoder(self.side, self.num_channels).to(self.device)
+            self.bn = Bottleneck(self.encoder.encoded_channel,self.encoder.encoded_side[-1]).to(self.device)
+            self.decoder = Decoder(self.side, self.num_channels, self.encoder.encoded_side).to(self.device)
 
         if model_summary:
             print("*" * 100)
