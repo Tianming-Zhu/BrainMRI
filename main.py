@@ -141,7 +141,6 @@ def run_optuna_training():
             cfg.AE_setting.NUM_CHANNELS = trial.suggest_int('ae_num_channels', 2, 4)
             cfg.AE_setting.STRIDE = trial.suggest_int('ae_stride',2,3)
             cfg.AE_setting.KERNEL_SIZE = trial.suggest_int('ae_kernel',2,4,step=1)
-            cfg.AE_setting.LOSS = trial.suggest_categorical('ae_loss',['l1','l2','ssim','weighted'])
             cfg.AE_setting.DROPOUT = trial.suggest_categorical('ae_dropout', [0.25, 0.5])
 
             model = Autoencoder.AutoEncoder()  # initialize a new model
@@ -155,7 +154,6 @@ def run_optuna_training():
             cfg.CAE_setting.NUM_CHANNELS = trial.suggest_int('cae_num_channels', 2, 4, step=2)
             cfg.CAE_setting.STRIDE = trial.suggest_int('cae_stride', 2, 4, step=2)
             cfg.CAE_setting.KERNEL_SIZE = trial.suggest_int('cae_kernel', 2, 4, step=2)
-            cfg.CAE_setting.LOSS = trial.suggest_categorical('cae_loss', ['l1', 'l2', 'ssim', 'weighted'])
             cfg.CAE_setting.LOSS_FACTOR = trial.suggest_int('cae_loss_factor', 1, 2)
             cfg.CAE_setting.DROPOUT = trial.suggest_categorical('cae_dropout', [0.25, 0.5])
             model = CVAE.CVAutoEncoder() # initialize a new model
