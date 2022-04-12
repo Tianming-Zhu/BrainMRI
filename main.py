@@ -30,8 +30,8 @@ images = []
 for i in np.arange(len(filelist)):
     img = nib.load(filelist[i])
     images.append(img.get_fdata())
-
-data = torch.from_numpy(np.array(images)).float()
+images = np.array(images)
+data = torch.from_numpy(images).float()
 train_val_data, test_data = train_test_split(data, test_size=0.15, random_state=42)
 
 # GLOBAL PARAMETERS
@@ -135,8 +135,8 @@ def run_optuna_training():
         # NOTE: uncomment the cfg.(respective hyper-parameters) if we want Optuna to vary more variables.
         if parser.model_type == 'ae':
             cfg.AE_setting.LEARNING_RATE = trial.suggest_categorical('ae_lr', [2e-4, 1e-4, 2e-3, 1e-3])
-            cfg.AE_setting.EPOCHS = trial.suggest_int('ae_epochs', 10, 40, step=10)
-            cfg.AE_setting.BATCH_SIZE = trial.suggest_int('ae_batchsize', 20, 50, step=10)
+            cfg.AE_setting.EPOCHS = trial.suggest_int('ae_epochs', 100, 300, step=30)
+            cfg.AE_setting.BATCH_SIZE = trial.suggest_int('ae_batchsize', 30, 80, step=10)
             cfg.AE_setting.EMBEDDING = trial.suggest_int('ae_embedding', 64, 256, step=64)
             cfg.AE_setting.NUM_CHANNELS = trial.suggest_int('ae_num_channels', 2, 4)
             cfg.AE_setting.STRIDE = trial.suggest_int('ae_stride',2,3)
