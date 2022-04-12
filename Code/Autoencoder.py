@@ -11,7 +11,7 @@ from Code.logger import Logger
 ### added for validation
 from sklearn.model_selection import train_test_split
 import Code.Metrics as M
-# import optuna
+import optuna
 
 import sys
 import warnings
